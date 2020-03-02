@@ -305,4 +305,13 @@ class BlogEtcPost extends Model implements SearchResultInterface
         }
         return $this->title;
     }
+
+    /**
+     * Increments amount of post views.
+     */
+    public function gotViewed()
+    {
+        $this->increment('views');
+        $this->save();
+    }
 }
