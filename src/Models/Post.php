@@ -519,4 +519,13 @@ class Post extends Model
     {
         return $this->renderBody();
     }
+
+    /**
+     * Increments amount of post views.
+     */
+    public function gotViewed()
+    {
+        $this->increment('views');
+        $this->save();
+    }
 }
