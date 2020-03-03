@@ -5,6 +5,7 @@ namespace WebDevEtc\BlogEtc\Models;
 use App\User;
 use Cviebrock\EloquentSluggable\Sluggable;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Collection;
 use Swis\LaravelFulltext\Indexable;
 use WebDevEtc\BlogEtc\Interfaces\SearchResultInterface;
 use WebDevEtc\BlogEtc\Scopes\BlogEtcPublishedScope;
@@ -15,7 +16,6 @@ use WebDevEtc\BlogEtc\Scopes\BlogEtcPublishedScope;
  */
 class BlogEtcPost extends Model implements SearchResultInterface
 {
-
     use Sluggable;
     use Indexable;
 
@@ -40,7 +40,6 @@ class BlogEtcPost extends Model implements SearchResultInterface
      * @var array
      */
     public $fillable = [
-
         'title',
         'subtitle',
         'short_description',
@@ -49,7 +48,6 @@ class BlogEtcPost extends Model implements SearchResultInterface
         'meta_desc',
         'slug',
         'use_view_file',
-
         'is_published',
         'posted_at',
     ];
@@ -264,8 +262,6 @@ class BlogEtcPost extends Model implements SearchResultInterface
      */
     protected function check_valid_image_size(string $size = 'medium')
     {
-
-
         if (array_key_exists("image_" . $size, config("blogetc.image_sizes"))) {
             return true;
         }
@@ -285,10 +281,8 @@ class BlogEtcPost extends Model implements SearchResultInterface
             throw new \InvalidArgumentException("Invalid image size ($size). BlogEtcPost image size should not begin with 'image_'. Remove this from the start of $size. It *should* be in the blogetc.image_sizes config though!");
         }
 
-
         throw new \InvalidArgumentException("BlogEtcPost image size should be 'large','medium','thumbnail' or another field as defined in config/blogetc.php. Provided size ($size) is not valid");
     }
-
 
     /**
      *
@@ -313,5 +307,16 @@ class BlogEtcPost extends Model implements SearchResultInterface
     {
         $this->increment('views');
         $this->save();
+    }
+
+    /**
+     * Returns most viewed posts.
+     * @return Collection
+     */
+    public static function getMostViewed()
+    {
+        $limit = config('blogetc.most_viewed_in_sidebar');
+
+        return self::select()->orderBy('views', 'desc')->limit($limit)->get();
     }
 }
