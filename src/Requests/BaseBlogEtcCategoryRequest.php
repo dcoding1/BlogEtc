@@ -13,8 +13,10 @@ abstract class BaseBlogEtcCategoryRequest extends BaseRequest
         $return = [
             'category_name' => ['required', 'string', 'min:1', 'max:200'],
             'slug' => ['required', 'alpha_dash', 'max:100', 'min:1'],
+            'icon' => ['required', 'string', 'max:255', 'min:1'],
             'category_description' => ['nullable', 'string', 'min:1', 'max:5000'],
         ];
+
         return $return;
     }
 }

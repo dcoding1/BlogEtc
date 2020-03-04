@@ -9,6 +9,7 @@ class BlogEtcCategory extends Model
     public $fillable = [
         'category_name',
         'slug',
+        'icon',
         'category_description',
     ];
 
@@ -37,10 +38,4 @@ class BlogEtcCategory extends Model
     {
         return route("blogetc.admin.categories.edit_category", $this->id);
     }
-
-//    public function scopeApproved($query)
-//    {
-//        dd("A");
-//        return $query->where("approved", true);
-//    }
 }

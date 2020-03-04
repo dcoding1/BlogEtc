@@ -24,6 +24,7 @@
 
     }
 </script>
+
 <div class="form-group">
     <label for="category_category_name">Category Name</label>
 
@@ -39,7 +40,6 @@
 
     <small id="category_category_name_help" class="form-text text-muted">The name of the category</small>
 </div>
-
 
 <div class="form-group">
     <label for="category_slug">Category slug</label>
@@ -64,13 +64,30 @@
     </small>
 </div>
 
+<div class="form-group">
+    <label for="category_icon">Category icon</label>
+    <input
+        maxlength="100"
+        type="text"
+        required
+        class="form-control"
+        id="category_icon"
+        aria-describedby="category_icon_help"
+        name="icon"
+        value="{{ old("icon", $category->icon) }}"
+    >
+    <small id="category_icon_help" class="form-text text-muted">
+        Icon for a category to be displayed on main page.
+        It can be either path to an image or text icon class,
+        depending on implementation of FE part in templates.
+    </small>
+</div>
 
 <div class="form-group">
     <label for="category_description">Category Description (optional)</label>
     <textarea name='category_description'
               class='form-control'
     id='category_description'>{{old("category_description",$category->category_description)}}</textarea>
-
 </div>
 
 <script>
