@@ -2,13 +2,17 @@
 
 namespace WebDevEtc\BlogEtc\Controllers;
 
-use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use WebDevEtc\BlogEtc\Middleware\UserCanManageBlogPosts;
 use WebDevEtc\BlogEtc\Models\BlogEtcUploadedPhoto;
-use File;
 use WebDevEtc\BlogEtc\Requests\UploadImageRequest;
 use WebDevEtc\BlogEtc\Traits\UploadFileTrait;
+
+use App\Http\Controllers\Controller;
+
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+
+use File;
 
 /**
  * Class BlogEtcAdminController
@@ -16,7 +20,6 @@ use WebDevEtc\BlogEtc\Traits\UploadFileTrait;
  */
 class BlogEtcImageUploadController extends Controller
 {
-
     use UploadFileTrait;
 
     /**
@@ -30,23 +33,47 @@ class BlogEtcImageUploadController extends Controller
             throw new \RuntimeException('The config/blogetc.php does not exist. Publish the vendor files for the BlogEtc package by running the php artisan publish:vendor command');
         }
 
-
         if (!config("blogetc.image_upload_enabled")) {
             throw new \RuntimeException("The blogetc.php config option has not enabled image uploading");
         }
-
-
     }
 
     /**
      * Show the main listing of uploaded images
      * @return mixed
      */
-
-
     public function index()
     {
-        return view("blogetc_admin::imageupload.index", ['uploaded_photos' => BlogEtcUploadedPhoto::orderBy("id", "desc")->paginate(10)]);
+        return view("blogetc_admin::imageupload.index", [
+            'uploaded_photos' => BlogEtcUploadedPhoto::orderBy("id", "desc")->paginate(10)
+        ]);
+    }
+
+    /**
+     * Show the main listing of uploaded images for froala editor.
+     * @return mixed
+     */
+    public function indexFloara()
+    {
+        $images = [];
+
+        $dir = config("blogetc.blog_upload_dir");
+        $files = Storage::disk()->allFiles($dir);
+        if (!empty($files)) {
+            foreach ($files as $file) {
+                if (strstr($file, 'thumb.')) {
+                    continue;
+                }
+                $thumbFile = str_replace($dir . '/', $dir . '/thumb.', $file);
+                $images[] = [
+                    'url' => '/storage/' . $file,
+                    'thumb' => '/storage/' . $thumbFile,
+                    'tag' => 'post'
+                ];
+            }
+        }
+
+        return $images;
     }
 
     /**
@@ -64,52 +91,103 @@ class BlogEtcImageUploadController extends Controller
      *
      * @param UploadImageRequest $request
      * @return \Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
+     *
      * @throws \Exception
      */
     public function store(UploadImageRequest $request)
     {
         $processed_images = $this->processUploadedImages($request);
 
-        return view("blogetc_admin::imageupload.uploaded", ['images' => $processed_images]);
+        return view("blogetc_admin::imageupload.uploaded", [
+            'images' => $processed_images
+        ]);
+    }
+
+    /**
+     * Save a new uploaded by froala editor image.
+     *
+     * @param Request $request
+     * @return array
+     *
+     * @throws \Exception
+     */
+    public function storeFloara(Request $request)
+    {
+        // save uploaded image to storage.
+        $file = $request->file('file');
+        $dir = config("blogetc.blog_upload_dir");
+        $fileName = $file->getFilename() .'.'. $file->guessExtension();
+        $originalPath = $file->storeAs($dir, $fileName);
+
+        // make image thumbnail in storage.
+        $image = \Image::make(storage_path('app/' . $originalPath));
+        $image->resize(200, null, function ($constraint) {
+            $constraint->aspectRatio();
+        });
+        $thumbPath = str_replace($fileName, 'thumb.' . $fileName, $originalPath);
+        $image->save(storage_path('app/' . $thumbPath));
+
+        // form public image link.
+        $link = '/storage/'. $dir .'/'. $fileName;
+
+        return ['link' => $link];
+    }
+
+    /**
+     * Delete uploaded by froala editor image.
+     *
+     * @param Request $request
+     * @return string
+     *
+     * @throws \Exception
+     */
+    public function deleteFloara(Request $request)
+    {
+        $dir = config("blogetc.blog_upload_dir");
+        $src = $request->get('src');
+        if (!empty($src)) {
+            $src = urldecode($src);
+            $src = str_replace('/storage/', '', $src);
+            if (is_file(storage_path('app/' . $src))) {
+                Storage::disk()->delete($src);
+                $originalPath = str_replace('thumb.', '', $src);
+                $deleted = Storage::disk()->delete($originalPath);
+            }
+        }
+
+        return $deleted ? 'ok' : 'not ok';
     }
 
     /**
      * Process any uploaded images (for featured image)
+     * @todo - This class was added after the other main features, so this duplicates some code from the main blog post admin controller (BlogEtcAdminController). For next full release this should be tided up.
      *
      * @param UploadImageRequest $request
-     *
      * @return array returns an array of details about each file resized.
+     *
      * @throws \Exception
-     * @todo - This class was added after the other main features, so this duplicates some code from the main blog post admin controller (BlogEtcAdminController). For next full release this should be tided up.
      */
     protected function processUploadedImages(UploadImageRequest $request)
     {
         $this->increaseMemoryLimit();
         $photo = $request->file('upload');
-
         // to save in db later
         $uploaded_image_details = [];
-
         $sizes_to_upload = $request->get("sizes_to_upload");
 
         // now upload a full size - this is a special case, not in the config file. We only store full size images in this class, not as part of the featured blog image uploads.
         if (isset($sizes_to_upload['blogetc_full_size']) && $sizes_to_upload['blogetc_full_size'] === 'true') {
-
             $uploaded_image_details['blogetc_full_size'] = $this->UploadAndResize(null, $request->get("image_title"), 'fullsize', $photo);
-
         }
 
         foreach ((array)config('blogetc.image_sizes') as $size => $image_size_details) {
-
             if (!isset($sizes_to_upload[$size]) || !$sizes_to_upload[$size] || !$image_size_details['enabled']) {
                 continue;
             }
-
             // this image size is enabled, and
             // we have an uploaded image that we can use
             $uploaded_image_details[$size] = $this->UploadAndResize(null, $request->get("image_title"), $image_size_details, $photo);
         }
-
 
         // store the image upload.
         BlogEtcUploadedPhoto::create([
@@ -119,10 +197,6 @@ class BlogEtcImageUploadController extends Controller
             'uploaded_images' => $uploaded_image_details,
         ]);
 
-
         return $uploaded_image_details;
-
     }
-
-
 }
