@@ -3,6 +3,7 @@
 namespace WebDevEtc\BlogEtc\Controllers;
 
 use WebDevEtc\BlogEtc\Middleware\UserCanManageBlogPosts;
+use WebDevEtc\BlogEtc\Models\BlogEtcPost;
 use WebDevEtc\BlogEtc\Models\BlogEtcUploadedPhoto;
 use WebDevEtc\BlogEtc\Requests\UploadImageRequest;
 use WebDevEtc\BlogEtc\Traits\UploadFileTrait;
@@ -141,6 +142,27 @@ class BlogEtcImageUploadController extends Controller
         $link = '/'. $dir .'/'. $fileName;
 
         return ['link' => $link];
+    }
+
+    /**
+     * Delete uploaded featured image.
+     *
+     * @param Request $request
+     * @return string
+     *
+     * @throws \Exception
+     */
+    public function delete($postId, $imageSize)
+    {
+        $post = BlogEtcPost::findOrFail($postId);
+        $deleted = $post->unsetImage($imageSize);
+
+        $image = BlogEtcUploadedPhoto::where(['blog_etc_post_id' => $postId])->first();
+        if ($image) {
+            $image->delete();
+        }
+
+        return $deleted ? 'ok' : 'not ok';
     }
 
     /**

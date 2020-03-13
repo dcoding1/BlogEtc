@@ -11,9 +11,10 @@ class BlogEtcUploadedPhoto extends Model
         'uploaded_images' => 'array',
     ];
     public $fillable = [
-
         'image_title',
         'uploader_id',
-        'source', 'uploaded_images',
+        'source',
+        'uploaded_images',
+        'blog_etc_post_id'
     ];
 }

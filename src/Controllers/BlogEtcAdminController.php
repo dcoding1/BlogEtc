@@ -178,10 +178,11 @@ class BlogEtcAdminController extends Controller
 
         // store the image upload.
         // todo: link this to the blogetc_post row.
-        if (count(array_filter($uploaded_image_details))>0) {
+        if (count(array_filter($uploaded_image_details)) > 0) {
             BlogEtcUploadedPhoto::create([
                 'source' => "BlogFeaturedImage",
                 'uploaded_images' => $uploaded_image_details,
+                'blog_etc_post_id' => $new_blog_post->id
             ]);
         }
     }

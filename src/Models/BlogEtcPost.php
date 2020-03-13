@@ -220,6 +220,23 @@ class BlogEtcPost extends Model implements SearchResultInterface
 
     }
 
+    /**
+     * Deletes an image of specific size.
+     *
+     * @param string $size of an image.
+     */
+    public function unsetImage($size)
+    {
+        if ($this->check_valid_image_size($size)) {
+            $this->{'image_' . $size} = null;
+            $this->save();
+
+            return true;
+        }
+
+        return false;
+    }
+
     public function generate_introduction($max_len = 500)
     {
         $base_text_to_use = $this->short_description;
