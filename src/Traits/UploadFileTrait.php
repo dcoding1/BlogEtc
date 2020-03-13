@@ -76,7 +76,7 @@ trait UploadFileTrait
      */
     protected function image_destination_path()
     {
-        $path = public_path('/' . config("blogetc.blog_upload_dir"));
+        $path = public_path(config("blogetc.blog_upload_dir"));
         $this->check_image_destination_path_is_writable($path);
         return $path;
     }
@@ -98,7 +98,6 @@ trait UploadFileTrait
 
         // make image
         $resizedImage = \Image::make($photo->getRealPath());
-
 
         if (is_array($image_size_details)) {
             // resize to these dimensions:
@@ -133,7 +132,6 @@ trait UploadFileTrait
             'w' => $w,
             'h' => $h,
         ];
-
     }
 
     /**
@@ -178,6 +176,9 @@ trait UploadFileTrait
     protected function check_image_destination_path_is_writable($path)
     {
         if (!$this->checked_blog_image_dir_is_writable) {
+            if (!is_dir($path)) {
+                mkdir($path);
+            }
             if (!is_writable($path)) {
                 throw new \RuntimeException("Image destination path is not writable ($path)");
             }

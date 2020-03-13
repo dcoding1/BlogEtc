@@ -58,16 +58,24 @@ class BlogEtcImageUploadController extends Controller
         $images = [];
 
         $dir = config("blogetc.blog_upload_dir");
-        $files = Storage::disk()->allFiles($dir);
+        $files = scandir(public_path($dir));
         if (!empty($files)) {
             foreach ($files as $file) {
-                if (strstr($file, 'thumb.')) {
+                if (is_dir($file) || strstr($file, 'thumb.')) {
+                    continue;
+                }
+                $allowedImageExtensions = ['jpg', 'jpeg', 'gif', 'png'];
+                $extension = pathinfo(public_path($dir .'/'. $file))['extension'];
+                if (!in_array($extension, $allowedImageExtensions)) {
                     continue;
                 }
                 $thumbFile = str_replace($dir . '/', $dir . '/thumb.', $file);
+                if (!is_file(public_path($dir .'/'. $thumbFile))) {
+                    $thumbFile = $file;
+                }
                 $images[] = [
-                    'url' => '/storage/' . $file,
-                    'thumb' => '/storage/' . $thumbFile,
+                    'url' => '/'. $dir .'/'. $file,
+                    'thumb' => '/'. $dir .'/'. $thumbFile,
                     'tag' => 'post'
                 ];
             }
@@ -115,20 +123,22 @@ class BlogEtcImageUploadController extends Controller
     {
         // save uploaded image to storage.
         $file = $request->file('file');
-        $dir = config("blogetc.blog_upload_dir");
         $fileName = $file->getFilename() .'.'. $file->guessExtension();
-        $originalPath = $file->storeAs($dir, $fileName);
+        $dir = config("blogetc.blog_upload_dir");
+        $originalPath = public_path($dir .'/'. $fileName);
+        $tmpPath = $file->getRealPath();
+        move_uploaded_file($tmpPath, $originalPath);
 
         // make image thumbnail in storage.
-        $image = \Image::make(storage_path('app/' . $originalPath));
+        $image = \Image::make($originalPath);
         $image->resize(200, null, function ($constraint) {
             $constraint->aspectRatio();
         });
         $thumbPath = str_replace($fileName, 'thumb.' . $fileName, $originalPath);
-        $image->save(storage_path('app/' . $thumbPath));
+        $image->save($thumbPath);
 
         // form public image link.
-        $link = '/storage/'. $dir .'/'. $fileName;
+        $link = '/'. $dir .'/'. $fileName;
 
         return ['link' => $link];
     }
@@ -147,11 +157,12 @@ class BlogEtcImageUploadController extends Controller
         $src = $request->get('src');
         if (!empty($src)) {
             $src = urldecode($src);
-            $src = str_replace('/storage/', '', $src);
-            if (is_file(storage_path('app/' . $src))) {
-                Storage::disk()->delete($src);
+            if (is_file(public_path($src))) {
+                $deleted = unlink(public_path($src));
                 $originalPath = str_replace('thumb.', '', $src);
-                $deleted = Storage::disk()->delete($originalPath);
+                if (is_file(public_path($originalPath))) {
+                    $deleted = unlink(public_path($originalPath));
+                }
             }
         }
 

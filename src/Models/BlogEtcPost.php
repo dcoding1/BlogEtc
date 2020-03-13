@@ -175,7 +175,8 @@ class BlogEtcPost extends Model implements SearchResultInterface
     public function has_image($size = 'medium')
     {
         $this->check_valid_image_size($size);
-        return strlen($this->{"image_" . $size});
+
+        return strlen($this->{'image_' . $size});
     }
 
     /**
@@ -188,8 +189,11 @@ class BlogEtcPost extends Model implements SearchResultInterface
     public function image_url($size = 'medium')
     {
         $this->check_valid_image_size($size);
-        $filename = $this->{"image_" . $size};
-        return asset(config("blogetc.blog_upload_dir", "blog_images") . "/" . $filename);
+        $filename = $this->{'image_' . $size};
+        $dir = config('blogetc.blog_upload_dir', 'blog_images');
+        $url = asset($dir .'/'. $filename);
+
+        return $url;
     }
 
     /**
@@ -207,9 +211,11 @@ class BlogEtcPost extends Model implements SearchResultInterface
             // return an empty string if this image does not exist.
             return '';
         }
+
         $url = e($this->image_url($size));
         $alt = e($this->title);
         $img = "<img src='$url' alt='$alt' class='" . e($img_class) . "' >";
+
         return $auto_link ? "<a class='" . e($anchor_class) . "' href='" . e($this->url()) . "'>$img</a>" : $img;
 
     }

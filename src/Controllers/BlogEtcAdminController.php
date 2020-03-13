@@ -47,13 +47,14 @@ class BlogEtcAdminController extends Controller
     public function index()
     {
         $posts = BlogEtcPost::orderBy("posted_at", "desc")
-            ->paginate(10);
+            ->paginate(config('blogetc.per_page'));
 
-        return view("blogetc_admin::index", ['posts'=>$posts]);
+        return view("blogetc_admin::index", ['posts' => $posts]);
     }
 
     /**
      * Show form for creating new post
+     * 
      * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
      */
     public function create_post()
@@ -71,20 +72,17 @@ class BlogEtcAdminController extends Controller
     public function store_post(CreateBlogEtcPostRequest $request)
     {
         $new_blog_post = new BlogEtcPost($request->all());
-
         $this->processUploadedImages($request, $new_blog_post);
-
         if (!$new_blog_post->posted_at) {
             $new_blog_post->posted_at = Carbon::now();
         }
-
         $new_blog_post->user_id = \Auth::user()->id;
         $new_blog_post->save();
-
         $new_blog_post->categories()->sync($request->categories());
 
         Helpers::flash_message("Added post");
         event(new BlogPostAdded($new_blog_post));
+
         return redirect($new_blog_post->edit_url());
     }
 
@@ -160,29 +158,23 @@ class BlogEtcAdminController extends Controller
     protected function processUploadedImages(BaseRequestInterface $request, BlogEtcPost $new_blog_post)
     {
         if (!config("blogetc.image_upload_enabled")) {
-            // image upload was disabled
+            // image upload was disabled.
             return;
         }
 
         $this->increaseMemoryLimit();
 
-        // to save in db later
+        // to save in db later.
         $uploaded_image_details = [];
-
-
-        foreach ((array)config('blogetc.image_sizes') as $size => $image_size_details) {
-
+        foreach ((array) config('blogetc.image_sizes') as $size => $image_size_details) {
             if ($image_size_details['enabled'] && $photo = $request->get_image_file($size)) {
                 // this image size is enabled, and
-                // we have an uploaded image that we can use
-
+                // we have an uploaded image that we can use.
                 $uploaded_image = $this->UploadAndResize($new_blog_post, $new_blog_post->title, $image_size_details, $photo);
-
                 $new_blog_post->$size = $uploaded_image['filename'];
                 $uploaded_image_details[$size] = $uploaded_image;
             }
         }
-
 
         // store the image upload.
         // todo: link this to the blogetc_post row.
@@ -192,9 +184,5 @@ class BlogEtcAdminController extends Controller
                 'uploaded_images' => $uploaded_image_details,
             ]);
         }
-
-
     }
-
-
 }
