@@ -4,7 +4,7 @@ namespace WebDevEtc\BlogEtc\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Swis\LaravelFulltext\Search;
+use WebDevEtc\BlogEtc\BlogSearch;
 use WebDevEtc\BlogEtc\Captcha\UsesCaptcha;
 use WebDevEtc\BlogEtc\Models\BlogEtcCategory;
 use WebDevEtc\BlogEtc\Models\BlogEtcPost;
@@ -63,18 +63,18 @@ class BlogEtcReaderController extends Controller
         if (!config("blogetc.search.search_enabled")) {
             throw new \Exception("Search is disabled");
         }
+
         $query = $request->get("s");
-        $search = new Search();
+        $search = new BlogSearch();
         $search_results = $search->run($query);
 
         \View::share("title", "Search results for " . e($query));
 
-        return view("blogetc::search", ['query' => $query, 'search_results' => $search_results]);
-
+        return view("blogetc::search", [
+            'query' => $query,
+            'search_results' => $search_results
+        ]);
     }
-
-
-
 
     /**
      * View all posts in $category_slug category
@@ -114,10 +114,4 @@ class BlogEtcReaderController extends Controller
             'captcha' => $captcha,
         ]);
     }
-
-
-
-
-
-
 }
