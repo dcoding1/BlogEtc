@@ -19,14 +19,15 @@ class BlogEtcPost extends Model implements SearchResultInterface
     use Sluggable;
     use Indexable;
 
-    protected $indexContentColumns = ['post_body', 'short_description', 'meta_desc',];
-    protected $indexTitleColumns = ['title', 'subtitle', 'seo_title',];
+    protected $indexContentColumns = ['post_body', 'short_description', 'meta_desc'];
+    protected $indexTitleColumns = ['title', 'subtitle', 'seo_title'];
 
     /**
      * @var array
      */
     public $casts = [
         'is_published' => 'boolean',
+        'is_featured' => 'boolean',
     ];
 
     /**
@@ -47,8 +48,10 @@ class BlogEtcPost extends Model implements SearchResultInterface
         'seo_title',
         'meta_desc',
         'slug',
+        'type',
         'use_view_file',
         'is_published',
+        'is_featured',
         'posted_at',
     ];
 

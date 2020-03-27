@@ -32,9 +32,9 @@ class BlogEtcCategoryAdminController extends Controller
      *
      * @return mixed
      */
-    public function index(){
-
-        $categories = BlogEtcCategory::orderBy("category_name")->paginate(25);
+    public function index()
+    {
+        $categories = BlogEtcCategory::orderBy("sort_order")->paginate(25);
         return view("blogetc_admin::categories.index")->withCategories($categories);
     }
 
@@ -72,6 +72,34 @@ class BlogEtcCategoryAdminController extends Controller
     public function edit_category($categoryId){
         $category = BlogEtcCategory::findOrFail($categoryId);
         return view("blogetc_admin::categories.edit_category")->withCategory($category);
+    }
+
+    /**
+     * Sets a category's sort order.
+     *
+     * @param integer $categoryId
+     * @param integer $sortOrder
+     * @return array
+     */
+    public function sort_category($categoryId, $sortOrder)
+    {
+        $category = BlogEtcCategory::findOrFail($categoryId);
+        $currSortOrder = $category->sort_order;
+
+        if ($sortOrder > $currSortOrder) {
+            BlogEtcCategory::whereBetween('sort_order', [$currSortOrder, $sortOrder])
+                ->decrement('sort_order');
+        } elseif ($sortOrder < $currSortOrder) {
+            BlogEtcCategory::whereBetween('sort_order', [$sortOrder, $currSortOrder])
+                ->increment('sort_order');
+        }
+
+        $category->sort_order = $sortOrder;
+        $category->save();
+
+        return [
+            'status' => 'ok'
+        ];
     }
 
     /**

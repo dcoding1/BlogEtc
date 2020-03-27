@@ -25,30 +25,34 @@ class BlogEtcReaderController extends Controller
      * @param null $category_slug
      * @return mixed
      */
-    public function index($category_slug = null)
+    public function index()
     {
-        // the published_at + is_published are handled by BlogEtcPublishedScope, and don't take effect if the logged in user can manageb log posts
-        $title = 'Viewing blog'; // default title...
+        return view("blogetc::index", [
+            'featured' => BlogEtcPost::where('is_featured', '=', '1')->get()
+        ]);
+    }
 
-        if ($category_slug) {
-            $category = BlogEtcCategory::where("slug", $category_slug)->firstOrFail();
-            $posts = $category->posts()->where("blog_etc_post_categories.blog_etc_category_id", $category->id);
+    public function articles()
+    {
+        return view("blogetc::articles", [
+            'categories' => BlogEtcCategory::select()->orderBy('sort_order', 'asc')->get()
+        ]);
+    }
 
-            // at the moment we handle this special case (viewing a category) by hard coding in the following two lines.
-            // You can easily override this in the view files.
-            \View::share('blogetc_category', $category); // so the view can say "You are viewing $CATEGORYNAME category posts"
-            $title = 'Viewing posts in ' . $category->category_name . " category"; // hardcode title here...
-        } else {
-            $posts = BlogEtcPost::query();
-        }
+    public function video()
+    {
+        return view("blogetc::video", [
+            'videos' => BlogEtcPost::where('type', '=', 'video')->get()
+        ]);
+    }
 
-        $posts = $posts->orderBy("posted_at", "desc")
+    private function getPosts($type)
+    {
+        $posts = BlogEtcPost::where('type', '=', $type)
+            ->orderBy("posted_at", "desc")
             ->paginate(config("blogetc.per_page", 10));
 
-        return view("blogetc::index", [
-            'posts' => $posts,
-            'title' => $title,
-        ]);
+        return $posts;
     }
 
     /**
@@ -85,7 +89,21 @@ class BlogEtcReaderController extends Controller
      */
     public function view_category($category_slug)
     {
-        return $this->index($category_slug);
+        $category = BlogEtcCategory::where("slug", $category_slug)->firstOrFail();
+        $posts = $category->posts()
+            ->where("blog_etc_post_categories.blog_etc_category_id", $category->id)
+            ->orderBy('is_featured', 'desc')
+            ->get();
+
+        // at the moment we handle this special case (viewing a category) by hard coding in the following two lines.
+        // You can easily override this in the view files.
+        \View::share('blogetc_category', $category); // so the view can say "You are viewing $CATEGORYNAME category posts"
+        $title = 'Viewing posts in ' . $category->category_name . " category"; // hardcode title here...
+
+        return view("blogetc::category", [
+            'category' => $category,
+            'posts' => $posts,
+        ]);
     }
 
     /**

@@ -71,14 +71,20 @@ class BlogEtcAdminController extends Controller
      */
     public function store_post(CreateBlogEtcPostRequest $request)
     {
-        $new_blog_post = new BlogEtcPost($request->all());
-        $this->processUploadedImages($request, $new_blog_post);
-        if (!$new_blog_post->posted_at) {
-            $new_blog_post->posted_at = Carbon::now();
+        $post = new BlogEtcPost($request->all());
+        $this->processUploadedImages($request, $post);
+        if (!$post->posted_at) {
+            $post->posted_at = Carbon::now();
         }
-        $new_blog_post->user_id = \Auth::user()->id;
-        $new_blog_post->save();
-        $new_blog_post->categories()->sync($request->categories());
+        $post->is_featured = $request->get('is_featured') ? 1 : 0;
+        if ($request->get('is_video')) {
+            $post->type = 'video';
+        } else {
+            $post->type = 'article';
+        }
+        $post->user_id = \Auth::user()->id;
+        $post->save();
+        $post->categories()->sync($request->categories());
 
         Helpers::flash_message("Added post");
         event(new BlogPostAdded($new_blog_post));
@@ -111,6 +117,12 @@ class BlogEtcAdminController extends Controller
         /** @var BlogEtcPost $post */
         $post = BlogEtcPost::findOrFail($blogPostId);
         $post->fill($request->all());
+        $post->is_featured = $request->get('is_featured') ? 1 : 0;
+        if ($request->get('is_video')) {
+            $post->type = 'video';
+        } else {
+            $post->type = 'article';
+        }
 
         $this->processUploadedImages($request, $post);
 
@@ -121,7 +133,6 @@ class BlogEtcAdminController extends Controller
         event(new BlogPostEdited($post));
 
         return redirect($post->edit_url());
-
     }
 
     /**

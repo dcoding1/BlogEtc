@@ -9,6 +9,14 @@ Route::group(['middleware' => ['web'], 'namespace' => '\WebDevEtc\BlogEtc\Contro
         Route::get('/', 'BlogEtcReaderController@index')
             ->name('blogetc.index');
 
+        Route::get('/articles', 'BlogEtcReaderController@articles')
+            ->name('blogetc.featured');
+
+        Route::get('/video', 'BlogEtcReaderController@video')
+            ->name('blogetc.video');
+
+        Route::view('/faq', 'vendor.blogetc.faq');
+
         Route::get('/search', 'BlogEtcReaderController@search')
             ->name('blogetc.search');
 
@@ -106,6 +114,10 @@ Route::group(['middleware' => ['web'], 'namespace' => '\WebDevEtc\BlogEtc\Contro
             Route::get('/edit_category/{categoryId}',
                 'BlogEtcCategoryAdminController@edit_category')
                 ->name('blogetc.admin.categories.edit_category');
+
+            Route::get('/sort_category/{categoryId}/{sortOrder}',
+                'BlogEtcCategoryAdminController@sort_category')
+                ->name('blogetc.admin.categories.sort_category');
 
             Route::patch('/edit_category/{categoryId}',
                 'BlogEtcCategoryAdminController@update_category')

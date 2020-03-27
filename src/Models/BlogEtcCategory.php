@@ -11,6 +11,7 @@ class BlogEtcCategory extends Model
         'slug',
         'icon',
         'category_description',
+        'sort_order'
     ];
 
     /**
