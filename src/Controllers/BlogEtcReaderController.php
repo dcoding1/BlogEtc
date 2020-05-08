@@ -28,7 +28,8 @@ class BlogEtcReaderController extends Controller
     public function index()
     {
         return view("blogetc::index", [
-            'featured' => BlogEtcPost::where('is_featured', '=', '1')->get()
+            'featured' => BlogEtcPost::where('is_featured', '=', '1')->get(),
+            'categories' => BlogEtcCategory::select()->orderBy('sort_order', 'asc')->get()
         ]);
     }
 
