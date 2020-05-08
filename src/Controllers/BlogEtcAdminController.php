@@ -87,9 +87,9 @@ class BlogEtcAdminController extends Controller
         $post->categories()->sync($request->categories());
 
         Helpers::flash_message("Added post");
-        event(new BlogPostAdded($new_blog_post));
+        event(new BlogPostAdded($post));
 
-        return redirect($new_blog_post->edit_url());
+        return redirect($post->edit_url());
     }
 
     /**
