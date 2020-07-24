@@ -34,6 +34,7 @@ return [
     // echo_html must be set to true for this to have an effect.
     'use_wysiwyg' => true, // Default: true
     'image_quality' => 80, // what image quality to use when saving images. higher = better + bigger sizes. Around 80 is normal.
+    'image_sizes_autocreation' => false,
     'image_sizes' => [
         // if you set 'enabled' to false, it will clear any data for that field the next time any row is updated. However it will NOT delete the .jpg file on your file server.
         // I recommend that you only change the enabled field before any images have been uploaded!
