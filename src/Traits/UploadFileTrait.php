@@ -3,6 +3,7 @@
 namespace WebDevEtc\BlogEtc\Traits;
 
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use WebDevEtc\BlogEtc\Events\UploadedImage;
 use WebDevEtc\BlogEtc\Models\BlogEtcPost;
 use File;
@@ -44,9 +45,26 @@ trait UploadFileTrait
      */
     protected function getImageFilename(string $suggested_title, $image_size_details, UploadedFile $photo)
     {
+        $dir = config('blogetc.blog_upload_dir', 'blog_images');
         $base = $this->generate_base_filename($suggested_title);
 
-	return $base;
+        // $wh will be something like "-1200x300"
+        $wh = $this->getWhForFilename($image_size_details);
+        $ext = '.' . $photo->getClientOriginalExtension();
+
+        for ($i = 1; $i <= self::$num_of_attempts_to_find_filename; $i++) {
+            // add suffix if $i>1
+            $suffix = $i > 1 ? '-' . str_random(5) : '';
+            $attempt = str_slug($base . $suffix . $wh) . $ext;
+
+            if (!Storage::exists( $dir ."/". $attempt)) {
+                // filename doesn't exist, let's use it!
+                return $attempt;
+            }
+        }
+
+        // too many attempts...
+        throw new \RuntimeException("Unable to find a free filename after $i attempts - aborting now.");
     }
 
     /**

@@ -59,24 +59,25 @@ class BlogEtcImageUploadController extends Controller
         $images = [];
 
         $dir = config("blogetc.blog_upload_dir");
-        $files = scandir(public_path($dir));
+        $files = Storage::allFiles($dir);
+
         if (!empty($files)) {
             foreach ($files as $file) {
-                if (is_dir($file) || strstr($file, 'thumb.')) {
+                if (strstr($file, 'thumb.')) {
                     continue;
                 }
                 $allowedImageExtensions = ['jpg', 'jpeg', 'gif', 'png'];
-                $extension = pathinfo(public_path($dir .'/'. $file))['extension'];
+                $extension = pathinfo($file)['extension'];
                 if (!in_array($extension, $allowedImageExtensions)) {
                     continue;
                 }
                 $thumbFile = str_replace($dir . '/', $dir . '/thumb.', $file);
-                if (!is_file(public_path($dir .'/'. $thumbFile))) {
+                if (!Storage::exists($thumbFile)) {
                     $thumbFile = $file;
                 }
                 $images[] = [
-                    'url' => '/'. $dir .'/'. $file,
-                    'thumb' => '/'. $dir .'/'. $thumbFile,
+                    'url' => Storage::url($file),
+                    'thumb' =>  Storage::url($thumbFile),
                     'tag' => 'post'
                 ];
             }
@@ -123,25 +124,27 @@ class BlogEtcImageUploadController extends Controller
     public function storeFloara(Request $request)
     {
         // save uploaded image to storage.
-        $file = $request->file('file');
-        $fileName = $file->getFilename() .'.'. $file->guessExtension();
         $dir = config("blogetc.blog_upload_dir");
-        $originalPath = public_path($dir .'/'. $fileName);
-        $tmpPath = $file->getRealPath();
-        move_uploaded_file($tmpPath, $originalPath);
+        $file = $request->file('file');
+
+        $path = Storage::put($dir, $file);
 
         // make image thumbnail in storage.
-        $image = \Image::make($originalPath);
+        $image = \Image::make($file->getRealPath());
         $image->resize(200, null, function ($constraint) {
             $constraint->aspectRatio();
         });
-        $thumbPath = str_replace($fileName, 'thumb.' . $fileName, $originalPath);
-        $image->save($thumbPath);
 
-        // form public image link.
-        $link = '/'. $dir .'/'. $fileName;
+        $fileName = pathinfo($path, PATHINFO_FILENAME);
+        $thumbPath = str_replace($fileName, 'thumb.' . $fileName, $path);
+        $stream = $image->stream(
+            pathinfo($path, PATHINFO_EXTENSION),
+            config("blogetc.image_quality", 80)
+        );
 
-        return ['link' => $link];
+        Storage::put($thumbPath, $stream);
+
+        return ['link' => Storage::url($path)];
     }
 
     /**
@@ -175,15 +178,17 @@ class BlogEtcImageUploadController extends Controller
      */
     public function deleteFloara(Request $request)
     {
-        $dir = config("blogetc.blog_upload_dir");
+        $deleted = false;
+
         $src = $request->get('src');
         if (!empty($src)) {
             $src = urldecode($src);
-            if (is_file(public_path($src))) {
-                $deleted = unlink(public_path($src));
+            $src = str_replace('/files', '', $src);
+            if (Storage::exists($src)) {
+                $deleted = Storage::delete($src);
                 $originalPath = str_replace('thumb.', '', $src);
-                if (is_file(public_path($originalPath))) {
-                    $deleted = unlink(public_path($originalPath));
+                if (Storage::exists($originalPath)) {
+                    $deleted = Storage::delete($originalPath);
                 }
             }
         }
