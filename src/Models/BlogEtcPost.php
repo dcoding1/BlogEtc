@@ -3,10 +3,14 @@
 namespace WebDevEtc\BlogEtc\Models;
 
 use App\User;
-use Cviebrock\EloquentSluggable\Sluggable;
+
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Storage;
+
+use Cviebrock\EloquentSluggable\Sluggable;
 use Swis\LaravelFulltext\Indexable;
+
 use WebDevEtc\BlogEtc\Interfaces\SearchResultInterface;
 use WebDevEtc\BlogEtc\Scopes\BlogEtcPublishedScope;
 
@@ -194,7 +198,7 @@ class BlogEtcPost extends Model implements SearchResultInterface
         $this->check_valid_image_size($size);
         $filename = $this->{'image_' . $size};
         $dir = config('blogetc.blog_upload_dir', 'blog_images');
-        $url = asset($dir .'/'. $filename);
+        $url = Storage::url($dir .'/'. $filename);
 
         return $url;
     }

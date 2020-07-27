@@ -46,41 +46,8 @@ trait UploadFileTrait
     {
         $base = $this->generate_base_filename($suggested_title);
 
-        // $wh will be something like "-1200x300"
-        $wh = $this->getWhForFilename($image_size_details);
-        $ext = '.' . $photo->getClientOriginalExtension();
-
-        for ($i = 1; $i <= self::$num_of_attempts_to_find_filename; $i++) {
-
-            // add suffix if $i>1
-            $suffix = $i > 1 ? '-' . str_random(5) : '';
-
-            $attempt = str_slug($base . $suffix . $wh) . $ext;
-
-            if (!File::exists($this->image_destination_path() . "/" . $attempt)) {
-                // filename doesn't exist, let's use it!
-                return $attempt;
-            }
-
-        }
-
-        // too many attempts...
-        throw new \RuntimeException("Unable to find a free filename after $i attempts - aborting now.");
-
+	return $base;
     }
-
-
-    /**
-     * @return string
-     * @throws \RuntimeException
-     */
-    protected function image_destination_path()
-    {
-        $path = public_path(config("blogetc.blog_upload_dir"));
-        $this->check_image_destination_path_is_writable($path);
-        return $path;
-    }
-
 
     /**
      * @param BlogEtcPost $new_blog_post
@@ -93,8 +60,9 @@ trait UploadFileTrait
     protected function UploadAndResize(BlogEtcPost $new_blog_post = null, $suggested_title, $image_size_details, $photo)
     {
         // get the filename/filepath
+        $dir = config('blogetc.blog_upload_dir', 'blog_images');
         $image_filename = $this->getImageFilename($suggested_title, $image_size_details, $photo);
-        $destinationPath = $this->image_destination_path();
+        $destinationPath =  $dir .'/'. $image_filename;
 
         // make image
         $resizedImage = \Image::make($photo->getRealPath());
@@ -122,6 +90,12 @@ trait UploadFileTrait
 
         // save image
         $resizedImage->save($destinationPath . '/' . $image_filename, config("blogetc.image_quality", 80));
+        $stream = $resizedImage->stream(
+            pathinfo($image_filename, PATHINFO_EXTENSION),
+            config("blogetc.image_quality", 80)
+        );
+
+        Storage::put($destinationPath, $stream);
 
         // fireevent
         event(new UploadedImage($image_filename, $resizedImage, $new_blog_post, __METHOD__));
@@ -165,25 +139,6 @@ trait UploadFileTrait
 
         // was not a string or array, so error
         throw new \RuntimeException("Invalid image_size_details: must be an array with w and h, or a string");
-    }
-
-    /**
-     * Check if the image destination directory is writable.
-     * Throw an exception if it was not writable
-     * @throws \RuntimeException
-     * @param $path
-     */
-    protected function check_image_destination_path_is_writable($path)
-    {
-        if (!$this->checked_blog_image_dir_is_writable) {
-            if (!is_dir($path)) {
-                mkdir($path);
-            }
-            if (!is_writable($path)) {
-                throw new \RuntimeException("Image destination path is not writable ($path)");
-            }
-            $this->checked_blog_image_dir_is_writable = true;
-        }
     }
 
     /**
