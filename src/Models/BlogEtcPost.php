@@ -198,7 +198,7 @@ class BlogEtcPost extends Model implements SearchResultInterface
         $this->check_valid_image_size($size);
         $filename = $this->{'image_' . $size};
         $dir = config('blogetc.blog_upload_dir', 'blog_images');
-        $url = Storage::url($dir .'/'. $filename);
+        $url = Storage::disk('public')->url($dir .'/'. $filename);
 
         return $url;
     }

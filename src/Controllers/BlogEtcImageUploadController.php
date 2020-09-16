@@ -76,8 +76,8 @@ class BlogEtcImageUploadController extends Controller
                     $thumbFile = $file;
                 }
                 $images[] = [
-                    'url' => Storage::url($file),
-                    'thumb' =>  Storage::url($thumbFile),
+                    'url' => Storage::disk('public')->url($file),
+                    'thumb' =>  Storage::disk('public')->url($thumbFile),
                     'tag' => 'post'
                 ];
             }
@@ -144,7 +144,7 @@ class BlogEtcImageUploadController extends Controller
 
         Storage::put($thumbPath, $stream);
 
-        return ['link' => Storage::url($path)];
+        return ['link' => Storage::disk('public')->url($path)];
     }
 
     /**
