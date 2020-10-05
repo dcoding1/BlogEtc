@@ -15,7 +15,8 @@ Route::group(['middleware' => ['web'], 'namespace' => '\WebDevEtc\BlogEtc\Contro
         Route::get('/video', 'BlogEtcReaderController@video')
             ->name('blogetc.video');
 
-        Route::view('/faq', 'vendor.blogetc.faq');
+        Route::get('/faq', 'BlogEtcReaderController@faq')
+            ->name('blogetc.faq');
 
         Route::get('/search', 'BlogEtcReaderController@search')
             ->name('blogetc.search');

@@ -47,6 +47,13 @@ class BlogEtcReaderController extends Controller
         ]);
     }
 
+    public function faq()
+    {
+        return view("blogetc::faq", [
+            'faq' => BlogEtcPost::where('type', '=', 'faq')->get()
+        ]);
+    }
+
     private function getPosts($type)
     {
         $posts = BlogEtcPost::where('type', '=', $type)

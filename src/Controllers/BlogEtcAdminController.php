@@ -79,6 +79,8 @@ class BlogEtcAdminController extends Controller
         $post->is_featured = $request->get('is_featured') ? 1 : 0;
         if ($request->get('is_video')) {
             $post->type = 'video';
+        } else if ($request->get('is_faq')) {
+            $post->type = 'faq';
         } else {
             $post->type = 'article';
         }
@@ -120,6 +122,8 @@ class BlogEtcAdminController extends Controller
         $post->is_featured = $request->get('is_featured') ? 1 : 0;
         if ($request->get('is_video')) {
             $post->type = 'video';
+        } else if ($request->get('is_faq')) {
+            $post->type = 'faq';
         } else {
             $post->type = 'article';
         }
