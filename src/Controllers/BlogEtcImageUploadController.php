@@ -144,7 +144,7 @@ class BlogEtcImageUploadController extends Controller
 
         Storage::put($thumbPath, $stream);
 
-        return ['link' => Storage::disk('public')->url($path)];
+        return ['link' => Storage::url($path)];
     }
 
     /**
