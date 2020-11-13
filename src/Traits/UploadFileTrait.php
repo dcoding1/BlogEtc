@@ -57,7 +57,7 @@ trait UploadFileTrait
             $suffix = $i > 1 ? '-' . str_random(5) : '';
             $attempt = str_slug($base . $suffix . $wh) . $ext;
 
-            if (!Storage::exists( $dir ."/". $attempt)) {
+            if (!Storage::disk('public')->exists( $dir ."/". $attempt)) {
                 // filename doesn't exist, let's use it!
                 return $attempt;
             }
@@ -112,7 +112,7 @@ trait UploadFileTrait
             config("blogetc.image_quality", 80)
         );
 
-        Storage::put($destinationPath, $stream);
+        Storage::disk('public')->put($destinationPath, $stream);
 
         // fireevent
         event(new UploadedImage($image_filename, $resizedImage, $new_blog_post, __METHOD__));

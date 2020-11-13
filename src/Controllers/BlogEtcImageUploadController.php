@@ -59,7 +59,7 @@ class BlogEtcImageUploadController extends Controller
         $images = [];
 
         $dir = config("blogetc.blog_upload_dir");
-        $files = Storage::allFiles($dir);
+        $files = Storage::disk('public')->allFiles($dir);
 
         if (!empty($files)) {
             foreach ($files as $file) {
@@ -72,7 +72,7 @@ class BlogEtcImageUploadController extends Controller
                     continue;
                 }
                 $thumbFile = str_replace($dir . '/', $dir . '/thumb.', $file);
-                if (!Storage::exists($thumbFile)) {
+                if (!Storage::disk('public')->exists($thumbFile)) {
                     $thumbFile = $file;
                 }
                 $images[] = [
@@ -127,7 +127,7 @@ class BlogEtcImageUploadController extends Controller
         $dir = config("blogetc.blog_upload_dir");
         $file = $request->file('file');
 
-        $path = Storage::put($dir, $file);
+        $path = Storage::disk('public')->put($dir, $file);
 
         // make image thumbnail in storage.
         $image = \Image::make($file->getRealPath());
@@ -142,9 +142,9 @@ class BlogEtcImageUploadController extends Controller
             config("blogetc.image_quality", 80)
         );
 
-        Storage::put($thumbPath, $stream);
+        Storage::disk('public')->put($thumbPath, $stream);
 
-        return ['link' => Storage::url($path)];
+        return ['link' => Storage::disk('public')->url($path)];
     }
 
     /**
@@ -184,11 +184,11 @@ class BlogEtcImageUploadController extends Controller
         if (!empty($src)) {
             $src = urldecode($src);
             $src = str_replace('/files', '', $src);
-            if (Storage::exists($src)) {
-                $deleted = Storage::delete($src);
+            if (Storage::disk('public')->exists($src)) {
+                $deleted = Storage::disk('public')->delete($src);
                 $originalPath = str_replace('thumb.', '', $src);
-                if (Storage::exists($originalPath)) {
-                    $deleted = Storage::delete($originalPath);
+                if (Storage::disk('public')->exists($originalPath)) {
+                    $deleted = Storage::disk('public')->delete($originalPath);
                 }
             }
         }
