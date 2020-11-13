@@ -107,7 +107,6 @@ trait UploadFileTrait
         }
 
         // save image
-        $resizedImage->save($destinationPath . '/' . $image_filename, config("blogetc.image_quality", 80));
         $stream = $resizedImage->stream(
             pathinfo($image_filename, PATHINFO_EXTENSION),
             config("blogetc.image_quality", 80)
